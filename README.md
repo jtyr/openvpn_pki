@@ -15,7 +15,7 @@ make server SERVER=myserver
 make client CLIENT=client01
 
 # Allow to set a password for the .p12 file
-make client CLIENT=client01 PASSOWRD=''
+make client CLIENT=client01 PASSWORD=''
 
 # Create the server and the client side stuff with bigger keys
 make client server SERVER=myserver CLIENT=client01 BITS=4096
