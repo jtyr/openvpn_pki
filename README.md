@@ -1,7 +1,7 @@
 openvpn_pki
 ===========
 
-Simple `Makefile` which helps to create OpenVPN PKI for the server and clients.
+Simple `Makefile` which helps to manage OpenVPN PKI for the server and clients.
 
 
 Usage
@@ -25,6 +25,12 @@ make server BATCH=''
 
 # Use an alternative OpenSSL config file
 make server CONFIG=./my_openssl.cnf
+
+# Create Certificate Revocation List (even with no revocation)
+make revoke_gen_crl
+
+# Revoke the client certificate
+make revoke CLIENT=client01"
 ```
 
 
