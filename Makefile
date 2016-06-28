@@ -34,7 +34,7 @@ SERVER_CONFIG_PARAMS=$(COMMON_CONFIG_PARAMS) \
 CLIENT_CONFIG_PARAMS=$(COMMON_CONFIG_PARAMS) \
     MY_CN=$(CLIENT)
 
-define OPENSSL_CONFIG =
+define OPENSSL_CONFIG
 [req]
 distinguished_name              = req_distinguished_name
 
