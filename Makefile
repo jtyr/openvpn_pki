@@ -1,3 +1,4 @@
+# Commands
 ECHO=echo
 OPENSSL=openssl
 OPENVPN=openvpn
@@ -7,6 +8,7 @@ RM_F=$(RM) -f
 MKDIR=mkdir
 MKDIR_P=$(MKDIR) -p
 
+# Values
 INDEX=index.txt
 SERIAL=serial
 SERIAL_NUM=01
@@ -22,17 +24,31 @@ TA=ta
 DH=dh$(BITS)
 CRL=crl
 DEST=./keys
+COUNTRY=
+PROVINCE=
+CITY=
+ORG=
+EMAIL=
+OU=
+COMMENT=OpenVPN Generated Server Certificate
 PASSWORD=-password pass:
-COMMON_CONFIG_PARAMS=MY_CA=$(CA) \
-    MY_DAYS=$(DAYS) \
-    MY_DEST=$(DEST) \
-    MY_INDEX=$(INDEX) \
-    MY_SERIAL=$(SERIAL) \
-    MY_CRL=$(CRL)
+COMMON_CONFIG_PARAMS=MY_CA="$(CA)" \
+    MY_DAYS="$(DAYS)" \
+    MY_DEST="$(DEST)" \
+    MY_INDEX="$(INDEX)" \
+    MY_SERIAL="$(SERIAL)" \
+    MY_CRL="$(CRL)" \
+    MY_COUNTRY="$(COUNTRY)" \
+    MY_PROVINCE="$(PROVINCE)" \
+    MY_CITY="$(CITY)" \
+    MY_ORG="$(ORG)" \
+    MY_EMAIL="$(EMAIL)" \
+    MY_OU="$(OU)" \
+    MY_COMMENT="$(COMMENT)"
 SERVER_CONFIG_PARAMS=$(COMMON_CONFIG_PARAMS) \
-    MY_CN=$(SERVER)
+    MY_CN="$(SERVER)"
 CLIENT_CONFIG_PARAMS=$(COMMON_CONFIG_PARAMS) \
-    MY_CN=$(CLIENT)
+    MY_CN="$(CLIENT)"
 
 define OPENSSL_CONFIG
 [req]
@@ -40,17 +56,17 @@ distinguished_name              = req_distinguished_name
 
 [req_distinguished_name]
 countryName                     = Country Name (2 letter code)
-countryName_default             = ""
+countryName_default             = $$ENV::MY_COUNTRY
 stateOrProvinceName             = State or Province Name (full name)
-stateOrProvinceName_default     = ""
+stateOrProvinceName_default     = $$ENV::MY_PROVINCE
 localityName                    = Locality Name (eg, city)
-localityName_default            = ""
+localityName_default            = $$ENV::MY_CITY
 0.organizationName              = Organization Name (eg, company)
-0.organizationName_default      = ""
+0.organizationName_default      = $$ENV::MY_ORG
 organizationalUnitName          = Organizational Unit Name (eg, section)
-organizationalUnitName_default  = ""
+organizationalUnitName_default  = $$ENV::MY_OU
 emailAddress                    = Email Address
-emailAddress_default            = ""
+emailAddress_default            = $$ENV::MY_EMAIL
 commonName                      = Common Name (e.g. server FQDN or YOUR name)
 commonName_default              = $$ENV::MY_CN
 
@@ -83,7 +99,7 @@ emailAddress                    = optional
 [server]
 basicConstraints                = CA:FALSE
 nsCertType                      = server
-nsComment                       = "Easy-RSA Generated Server Certificate"
+nsComment                       = $$ENV::MY_COMMENT
 subjectKeyIdentifier            = hash
 authorityKeyIdentifier          = keyid,issuer:always
 extendedKeyUsage                = serverAuth
@@ -103,6 +119,8 @@ all:
 	@echo "Examples:"
 	@echo "  # Create only the server side stuff"
 	@echo "  make server SERVER=myserver"
+	@echo "  # Add organization, organizational unit and e-mail into the server cert"
+	@echo "  make server SERVER=myserver ORG='My Org Ltd.' OU='IT dep' EMAIL='info@example.com'"
 	@echo "  # Create only the client side stuff"
 	@echo "  make client CLIENT=client01"
 	@echo "  # Allow to set a password for the .p12 file"
@@ -113,7 +131,7 @@ all:
 	@echo "  make server BATCH=''"
 	@echo "  # Use an alternative OpenSSL config file"
 	@echo "  make server CONFIG=./my_openssl.cnf"
-	@echo "  # Create Certificate Revocation List (even with no revocation)"
+	@echo "  # Create Certificate Revocation List (even with no previous revocation)"
 	@echo "  make revoke_gen_crl"
 	@echo "  # Revoke client certificate"
 	@echo "  make revoke CLIENT=client01"

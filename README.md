@@ -11,6 +11,9 @@ Usage
 # Create only the server side stuff
 make server SERVER=myserver
 
+# Add organization, organizational unit and e-mail into the server cert
+make server SERVER=myserver ORG='My Org Ltd.' OU='IT dep' EMAIL='info@example.com'
+
 # Create only the client side stuff
 make client CLIENT=client01
 
@@ -26,7 +29,7 @@ make server BATCH=''
 # Use an alternative OpenSSL config file
 make server CONFIG=./my_openssl.cnf
 
-# Create Certificate Revocation List (even with no revocation)
+# Create Certificate Revocation List (even with no previous revocation)
 make revoke_gen_crl
 
 # Revoke the client certificate
