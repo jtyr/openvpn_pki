@@ -16,6 +16,7 @@ SERVER=server
 CLIENT=client
 CONFIG=openssl.cnf
 EXTENSION=server
+SAN=DNS:localhost
 BATCH=-batch
 DAYS=3650
 BITS=2048
@@ -44,6 +45,7 @@ COMMON_CONFIG_PARAMS=MY_CA="$(CA)" \
     MY_ORG="$(ORG)" \
     MY_EMAIL="$(EMAIL)" \
     MY_OU="$(OU)" \
+    MY_SAN="$(SAN)" \
     MY_COMMENT="$(COMMENT)"
 SERVER_CONFIG_PARAMS=$(COMMON_CONFIG_PARAMS) \
     MY_CN="$(SERVER)"
@@ -104,6 +106,16 @@ subjectKeyIdentifier            = hash
 authorityKeyIdentifier          = keyid,issuer:always
 extendedKeyUsage                = serverAuth
 keyUsage                        = digitalSignature, keyEncipherment
+
+[san]
+basicConstraints                = CA:FALSE
+nsCertType                      = server
+nsComment                       = $$ENV::MY_COMMENT
+subjectKeyIdentifier            = hash
+authorityKeyIdentifier          = keyid,issuer:always
+extendedKeyUsage                = serverAuth
+keyUsage                        = digitalSignature, keyEncipherment
+subjectAltName                  = $$ENV::MY_SAN
 endef
 export OPENSSL_CONFIG
 
@@ -119,8 +131,10 @@ all:
 	@echo "Examples:"
 	@echo "  # Create only the server side stuff"
 	@echo "  make server SERVER=myserver"
-	@echo "  # Add organization, organizational unit and e-mail into the server cert"
+	@echo "  # Create server cert with organization, organizational unit and e-mail into the server cert"
 	@echo "  make server SERVER=myserver ORG='My Org Ltd.' OU='IT dep' EMAIL='info@example.com'"
+	@echo "  # Create server cert with alternative server names"
+	@echo "  make server SERVER=myserver EXTENSION=san SAN=DNS:server1,DNS:server2"
 	@echo "  # Create only the client side stuff"
 	@echo "  make client CLIENT=client01"
 	@echo "  # Allow to set a password for the .p12 file"
