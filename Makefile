@@ -241,7 +241,7 @@ revoke_gen_crl:
 
 revoke_verify:
 	$(info ##### Verifying the revocation)
-	$(OPENSSL) verify -CAfile $(DEST)/$(CA).crt -crl_check $(DEST)/$(CLIENT).crt && $(ECHO) "Verification failed" || $(ECHO) "Verification succeeded"
+	$(OPENSSL) verify -CRLfile $(DEST)/$(CRL).pem -CAfile $(DEST)/$(CA).crt -crl_check $(DEST)/$(CLIENT).crt && $(ECHO) "Verification failed" || $(ECHO) "Verification succeeded"
 
 
 clear:
