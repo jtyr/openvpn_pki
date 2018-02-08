@@ -86,7 +86,7 @@ policy                          = policy_anything
 serial                          = $$ENV::MY_DEST/$$ENV::MY_SERIAL
 crl_dir                         = $$ENV::MY_DEST
 crl                             = $$ENV::MY_DEST/$$ENV::MY_CRL.pem
-default_crl_days                = 365
+default_crl_days                = $$ENV::MY_DAYS
 
 [policy_anything]
 countryName                     = optional
