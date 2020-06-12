@@ -24,7 +24,8 @@ CA=ca
 TA=ta
 DH=dh$(BITS)
 CRL=crl
-DEST=./keys
+DEST_SERVER=./keys/server
+DEST_CLIENT=./keys/client
 COUNTRY=
 PROVINCE=
 CITY=
@@ -35,7 +36,8 @@ COMMENT=OpenVPN Generated Server Certificate
 PASSWORD=-password pass:
 COMMON_CONFIG_PARAMS=MY_CA="$(CA)" \
     MY_DAYS="$(DAYS)" \
-    MY_DEST="$(DEST)" \
+    MY_DEST_SERVER="$(DEST_SERVER)" \
+    MY_DEST_CLIENT="$(DEST_CLIENT)" \
     MY_INDEX="$(INDEX)" \
     MY_SERIAL="$(SERIAL)" \
     MY_CRL="$(CRL)" \
@@ -77,15 +79,15 @@ default_ca                      = CA_default
 
 [CA_default]
 default_days                    = $$ENV::MY_DAYS
-private_key                     = $$ENV::MY_DEST/$$ENV::MY_CA.key
-certificate                     = $$ENV::MY_DEST/$$ENV::MY_CA.crt
-new_certs_dir                   = $$ENV::MY_DEST
-database                        = $$ENV::MY_DEST/$$ENV::MY_INDEX
+private_key                     = $$ENV::MY_DEST_SERVER/$$ENV::MY_CA.key
+certificate                     = $$ENV::MY_DEST_SERVER/$$ENV::MY_CA.crt
+new_certs_dir                   = $$ENV::MY_DEST_SERVER
+database                        = $$ENV::MY_DEST_SERVER/$$ENV::MY_INDEX
 default_md                      = sha256
 policy                          = policy_anything
-serial                          = $$ENV::MY_DEST/$$ENV::MY_SERIAL
-crl_dir                         = $$ENV::MY_DEST
-crl                             = $$ENV::MY_DEST/$$ENV::MY_CRL.pem
+serial                          = $$ENV::MY_DEST_SERVER/$$ENV::MY_SERIAL
+crl_dir                         = $$ENV::MY_DEST_SERVER
+crl                             = $$ENV::MY_DEST_SERVER/$$ENV::MY_CRL.pem
 default_crl_days                = $$ENV::MY_DAYS
 
 [policy_anything]
@@ -154,51 +156,55 @@ all:
 server: init ca server_pki dh ta
 
 
-ca: $(DEST)/$(CA).key $(DEST)/$(CA).crt
+ca: $(DEST_SERVER)/$(CA).key $(DEST_SERVER)/$(CA).crt
 
-$(DEST)/$(CA).key $(DEST)/$(CA).crt:
+$(DEST_SERVER)/$(CA).key $(DEST_SERVER)/$(CA).crt:
 	$(info ##### Creating CA key and certificate)
 	$(SERVER_CONFIG_PARAMS) \
-	$(OPENSSL) req $(BATCH) -days $(DAYS) -nodes -new -newkey rsa:$(BITS) -x509 -keyout $(DEST)/$(CA).key -out $(DEST)/$(CA).crt -config $(CONFIG)
+	$(OPENSSL) req $(BATCH) -days $(DAYS) -nodes -new -newkey rsa:$(BITS) -x509 -keyout $(DEST_SERVER)/$(CA).key -out $(DEST_SERVER)/$(CA).crt -config $(CONFIG)
 
 
-server_pki: $(DEST)/$(SERVER).key $(DEST)/$(SERVER).csr $(DEST)/$(SERVER).crt
+server_pki: $(DEST_SERVER)/$(SERVER).key $(DEST_SERVER)/$(SERVER).csr $(DEST_SERVER)/$(SERVER).crt
 
-$(DEST)/$(SERVER).key $(DEST)/$(SERVER).csr:
+$(DEST_SERVER)/$(SERVER).key $(DEST_SERVER)/$(SERVER).csr:
 	$(info ##### Creating Server key and certificate signed request)
 	$(SERVER_CONFIG_PARAMS) \
-	$(OPENSSL) req $(BATCH) -nodes -new -newkey rsa:$(BITS) -keyout $(DEST)/$(SERVER).key -out $(DEST)/$(SERVER).csr -extensions $(EXTENSION) -config $(CONFIG)
+	$(OPENSSL) req $(BATCH) -nodes -new -newkey rsa:$(BITS) -keyout $(DEST_SERVER)/$(SERVER).key -out $(DEST_SERVER)/$(SERVER).csr -extensions $(EXTENSION) -config $(CONFIG)
 
-$(DEST)/$(SERVER).crt:
+$(DEST_SERVER)/$(SERVER).crt:
 	$(info ##### Creating Server certificate)
 	$(SERVER_CONFIG_PARAMS) \
-	$(OPENSSL) ca $(BATCH) -days $(DAYS) -in $(DEST)/$(SERVER).csr -extensions $(EXTENSION) -config $(CONFIG) -out $(DEST)/$(SERVER).crt
+	$(OPENSSL) ca $(BATCH) -days $(DAYS) -in $(DEST_SERVER)/$(SERVER).csr -extensions $(EXTENSION) -config $(CONFIG) -out $(DEST_SERVER)/$(SERVER).crt
+	$(RM_F) $(DEST_SERVER)/$(SERVER).csr
 
 
-dh: $(DEST)/$(DH).pem
+dh: $(DEST_SERVER)/$(DH).pem
 
-$(DEST)/$(DH).pem:
+$(DEST_SERVER)/$(DH).pem:
 	$(info ##### Creating Diffie-Hellman certificate)
-	$(OPENSSL) dhparam -out $(DEST)/$(DH).pem $(BITS)
+	$(OPENSSL) dhparam -out $(DEST_SERVER)/$(DH).pem $(BITS)
 
 
-ta: $(DEST)/$(TA).key
+ta: $(DEST_SERVER)/$(TA).key
 
-$(DEST)/$(TA).key:
+$(DEST_SERVER)/$(TA).key:
 	$(info ##### Creating HMAC key)
-	$(OPENVPN) --genkey --secret $(DEST)/$(TA).key
+	$(OPENVPN) --genkey --secret $(DEST_SERVER)/$(TA).key
 
 
-init: $(DEST) $(DEST)/$(INDEX) $(DEST)/$(SERIAL) $(CONFIG)
+init: $(DEST_SERVER) $(DEST_CLIENT) $(DEST_SERVER)/$(INDEX) $(DEST_SERVER)/$(SERIAL) $(CONFIG)
 
-$(DEST):
-	$(MKDIR_P) $(DEST)
+$(DEST_SERVER):
+	$(MKDIR_P) $(DEST_SERVER)
 
-$(DEST)/$(INDEX):
-	$(ECHO) -n "" > $(DEST)/$(INDEX)
+$(DEST_CLIENT):
+	$(MKDIR_P) $(DEST_CLIENT)
 
-$(DEST)/$(SERIAL):
-	$(ECHO) $(SERIAL_NUM) > $(DEST)/$(SERIAL)
+$(DEST_SERVER)/$(INDEX):
+	$(ECHO) -n "" > $(DEST_SERVER)/$(INDEX)
+
+$(DEST_SERVER)/$(SERIAL):
+	$(ECHO) $(SERIAL_NUM) > $(DEST_SERVER)/$(SERIAL)
 
 $(CONFIG):
 	$(ECHO) "$$OPENSSL_CONFIG" > $(CONFIG)
@@ -207,24 +213,25 @@ $(CONFIG):
 client: client_pki client_p12
 
 
-client_pki: $(DEST)/$(CLIENT).key $(DEST)/$(CLIENT).csr $(DEST)/$(CLIENT).crt
+client_pki: $(DEST_CLIENT)/$(CLIENT).key $(DEST_CLIENT)/$(CLIENT).csr $(DEST_CLIENT)/$(CLIENT).crt
 
-$(DEST)/$(CLIENT).key $(DEST)/$(CLIENT).csr:
+$(DEST_CLIENT)/$(CLIENT).key $(DEST_CLIENT)/$(CLIENT).csr:
 	$(info ##### Creating Client key and certificate signed request)
 	$(CLIENT_CONFIG_PARAMS) \
-	$(OPENSSL) req $(BATCH) -nodes -new -newkey rsa:$(BITS) -keyout $(DEST)/$(CLIENT).key -out $(DEST)/$(CLIENT).csr -config $(CONFIG)
+	$(OPENSSL) req $(BATCH) -nodes -new -newkey rsa:$(BITS) -keyout $(DEST_CLIENT)/$(CLIENT).key -out $(DEST_CLIENT)/$(CLIENT).csr -config $(CONFIG)
 
-$(DEST)/$(CLIENT).crt:
+$(DEST_CLIENT)/$(CLIENT).crt:
 	$(info ##### Creating Client certificate)
 	$(CLIENT_CONFIG_PARAMS) \
-	$(OPENSSL) ca $(BATCH) -days $(DAYS) -out $(DEST)/$(CLIENT).crt -in $(DEST)/$(CLIENT).csr -config $(CONFIG)
+	$(OPENSSL) ca $(BATCH) -days $(DAYS) -out $(DEST_CLIENT)/$(CLIENT).crt -in $(DEST_CLIENT)/$(CLIENT).csr -config $(CONFIG)
+	$(RM_F) $(DEST_CLIENT)/$(CLIENT).csr
 
 
-client_p12: $(DEST)/$(CLIENT).p12
+client_p12: $(DEST_CLIENT)/$(CLIENT).p12
 
-$(DEST)/$(CLIENT).p12:
+$(DEST_CLIENT)/$(CLIENT).p12:
 	$(info ##### Exporting the Server CA and the Client key and certificate into one file (e.g. for Android))
-	$(OPENSSL) pkcs12 -export -certfile $(DEST)/$(CA).crt -inkey $(DEST)/$(CLIENT).key -in $(DEST)/$(CLIENT).crt -out $(DEST)/$(CLIENT).p12 $(PASSWORD)
+	$(OPENSSL) pkcs12 -export -certfile $(DEST_SERVER)/$(CA).crt -inkey $(DEST_CLIENT)/$(CLIENT).key -in $(DEST_CLIENT)/$(CLIENT).crt -out $(DEST_CLIENT)/$(CLIENT).p12 $(PASSWORD)
 
 
 revoke: revoke_cert revoke_gen_crl revoke_verify
@@ -232,19 +239,21 @@ revoke: revoke_cert revoke_gen_crl revoke_verify
 revoke_cert:
 	$(info ##### Revoking certificate)
 	$(CLIENT_CONFIG_PARAMS) \
-	$(OPENSSL) ca -revoke $(DEST)/$(CLIENT).crt -config $(CONFIG)
+	$(OPENSSL) ca -revoke $(DEST_CLIENT)/$(CLIENT).crt -config $(CONFIG)
 
 revoke_gen_crl:
 	$(info ##### Generating the Certificate Revocation List)
 	$(CLIENT_CONFIG_PARAMS) \
-	$(OPENSSL) ca -gencrl -out $(DEST)/$(CRL).pem -config $(CONFIG)
+	$(OPENSSL) ca -gencrl -out $(DEST_CLIENT)/$(CRL).pem -config $(CONFIG)
 
 revoke_verify:
 	$(info ##### Verifying the revocation)
-	$(OPENSSL) verify -CRLfile $(DEST)/$(CRL).pem -CAfile $(DEST)/$(CA).crt -crl_check $(DEST)/$(CLIENT).crt && $(ECHO) "Verification failed" || $(ECHO) "Verification succeeded"
+	$(OPENSSL) verify -CRLfile $(DEST_SERVER)/$(CRL).pem -CAfile $(DEST_SERVER)/$(CA).crt -crl_check $(DEST_CLIENT)/$(CLIENT).crt && $(ECHO) "Verification failed" || $(ECHO) "Verification succeeded"
 
 
 clear:
-	$(RM_F) $(DEST)/*.{key,csr,crt,pem,p12}
-	$(RM_F) $(DEST)/$(INDEX)*
-	$(RM_F) $(DEST)/$(SERIAL)*
+	$(RM_F) $(DEST_SERVER)/*.{key,csr,crt,pem}
+	$(RM_F) $(DEST_CLIENT)/*.{key,csr,crt,p12}
+	$(RM_F) $(DEST_SERVER)/$(INDEX)*
+	$(RM_F) $(DEST_SERVER)/$(SERIAL)*
+	$(RM_F) $(CONFIG)

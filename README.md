@@ -24,7 +24,7 @@ make client CLIENT=client01
 make client CLIENT=client01 PASSOWRD=''
 
 # Create the server and the client side stuff with bigger keys
-make client server SERVER=myserver CLIENT=client01 BITS=4096
+make server client SERVER=myserver CLIENT=client01 BITS=4096
 
 # Prompt for all certificate details instead of reading if from the config file
 make server BATCH=''
