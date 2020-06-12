@@ -175,7 +175,6 @@ $(DEST_SERVER)/$(SERVER).crt:
 	$(info ##### Creating Server certificate)
 	$(SERVER_CONFIG_PARAMS) \
 	$(OPENSSL) ca $(BATCH) -days $(DAYS) -in $(DEST_SERVER)/$(SERVER).csr -extensions $(EXTENSION) -config $(CONFIG) -out $(DEST_SERVER)/$(SERVER).crt
-	$(RM_F) $(DEST_SERVER)/$(SERVER).csr
 
 
 dh: $(DEST_SERVER)/$(DH).pem
@@ -224,7 +223,6 @@ $(DEST_CLIENT)/$(CLIENT).crt:
 	$(info ##### Creating Client certificate)
 	$(CLIENT_CONFIG_PARAMS) \
 	$(OPENSSL) ca $(BATCH) -days $(DAYS) -out $(DEST_CLIENT)/$(CLIENT).crt -in $(DEST_CLIENT)/$(CLIENT).csr -config $(CONFIG)
-	$(RM_F) $(DEST_CLIENT)/$(CLIENT).csr
 
 
 client_p12: $(DEST_CLIENT)/$(CLIENT).p12
