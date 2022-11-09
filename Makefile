@@ -126,31 +126,40 @@ export OPENSSL_CONFIG
 
 
 all:
-	@echo "OpenVPN PKI management for the server and clients."
-	@echo ""
-	@echo "Usage: make [server|client|revoke]"
-	@echo ""
-	@echo "Examples:"
-	@echo "  # Create only the server side stuff"
-	@echo "  make server SERVER=myserver"
-	@echo "  # Create server cert with organization, organizational unit and e-mail into the server cert"
-	@echo "  make server SERVER=myserver ORG='My Org Ltd.' OU='IT dep' EMAIL='info@example.com'"
-	@echo "  # Create server cert with alternative server names"
-	@echo "  make server SERVER=myserver EXTENSION=san SAN=DNS:server1,DNS:server2"
-	@echo "  # Create only the client side stuff"
-	@echo "  make client CLIENT=client01"
-	@echo "  # Allow to set a password for the .p12 file"
-	@echo "  make client CLIENT=client01 PASSOWRD=''"
-	@echo "  # Create the server and the client side stuff with bigger keys"
-	@echo "  make client server SERVER=myserver CLIENT=client01 BITS=4096"
-	@echo "  # Prompt for all certificate details instead of reading if from the config file"
-	@echo "  make server BATCH=''"
-	@echo "  # Use an alternative OpenSSL config file"
-	@echo "  make server CONFIG=./my_openssl.cnf"
-	@echo "  # Create Certificate Revocation List (even with no previous revocation)"
-	@echo "  make revoke_gen_crl"
-	@echo "  # Revoke client certificate"
-	@echo "  make revoke CLIENT=client01"
+	@echo 'OpenVPN PKI management for the server and clients.'
+	@echo ''
+	@echo 'Usage: make [server|client|revoke]'
+	@echo ''
+	@echo 'Examples:'
+	@echo '  # Create only the server CA and cert'
+	@echo '  make server SERVER=myserver'
+	@echo ''
+	@echo '  # Create server CA and cert with specific organization details'
+	@echo '  make server SERVER=myserver ORG="My Org Ltd." OU="IT dep" EMAIL="info@example.com"'
+	@echo ''
+	@echo '  # Create server cert with alternative server names'
+	@echo '  make server SERVER=myserver EXTENSION=san SAN=DNS:server1,DNS:server2'
+	@echo ''
+	@echo '  # Create only the client side certificate'
+	@echo '  make client CLIENT=client01'
+	@echo ''
+	@echo '  # Allow to set a password for the .p12 file'
+	@echo '  make client CLIENT=client01 PASSOWRD=""'
+	@echo ''
+	@echo '  # Create the server and the client side certificates in one go and with stronger key'
+	@echo '  make server client SERVER=myserver CLIENT=client01 BITS=4096'
+	@echo ''
+	@echo '  # Prompt for all certificate details instead of reading it from the config file'
+	@echo '  make server BATCH=""'
+	@echo ''
+	@echo '  # Use an alternative OpenSSL config file'
+	@echo '  make server CONFIG=./my_openssl.cnf'
+	@echo ''
+	@echo '  # Create Certificate Revocation List (even with no previous revocation)'
+	@echo '  make revoke_gen_crl'
+	@echo ''
+	@echo '  # Revoke client certificate'
+	@echo '  make revoke CLIENT=client01'
 
 
 server: init ca server_pki dh ta
@@ -246,7 +255,7 @@ revoke_gen_crl:
 
 revoke_verify:
 	$(info ##### Verifying the revocation)
-	$(OPENSSL) verify -CRLfile $(DEST_SERVER)/$(CRL).pem -CAfile $(DEST_SERVER)/$(CA).crt -crl_check $(DEST_CLIENT)/$(CLIENT).crt && $(ECHO) "Verification failed" || $(ECHO) "Verification succeeded"
+	$(OPENSSL) verify -CRLfile $(DEST_CLIENT)/$(CRL).pem -CAfile $(DEST_SERVER)/$(CA).crt -crl_check $(DEST_CLIENT)/$(CLIENT).crt && $(ECHO) 'Verification failed' || $(ECHO) 'Verification succeeded'
 
 
 clear:
